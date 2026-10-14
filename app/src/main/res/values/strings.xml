@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Aira</string>
+    <string name="accessibility_service_description">Aira Autonomous OS Controller: Enables hands-free screen lock, navigation, and hardware actions commanded by Er. Adam Eehan.</string>
+</resources>

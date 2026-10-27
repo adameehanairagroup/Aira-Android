@@ -7,6 +7,9 @@ on:
     branches: [ "main", "master" ]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     name: Build & Package AiraPhone APK
@@ -21,30 +24,17 @@ jobs:
         with:
           java-version: '21'
           distribution: 'temurin'
+          cache: 'gradle'
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Cache Gradle Packages
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
+      - name: Accept Android SDK Licenses
+        run: |
+          yes | sdkmanager --licenses || true
 
       - name: Make Gradle Wrapper Executable
         run: chmod +x gradlew || true
 
       - name: Build Debug APK
-        run: |
-          if [ -f "./gradlew" ]; then
-            ./gradlew assembleDebug --no-daemon --stacktrace
-          else
-            gradle assembleDebug --no-daemon
-          fi
+        run: ./gradlew assembleDebug --no-daemon --stacktrace
 
       - name: Upload Finished APK Artifact
         uses: actions/upload-artifact@v4
@@ -52,3 +42,19 @@ jobs:
           name: Aira-Android-Debug
           path: app/build/outputs/apk/debug/*.apk
           retention-days: 14
+
+      - name: Publish APK to GitHub Release
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          APK_PATH=$(ls app/build/outputs/apk/debug/*.apk 2>/dev/null | head -n 1)
+          if [ -n "$APK_PATH" ] && [ -f "$APK_PATH" ]; then
+            echo "Publishing APK: $APK_PATH"
+            gh release create v1.0.0-apk "$APK_PATH" \
+              --title "Aira Android APK v1.0.0" \
+              --notes "Official Aira Android Assistant APK engineered by Er. Adam Eehan & Aira 3 Ultra." \
+              --clobber || gh release upload v1.0.0-apk "$APK_PATH" --clobber
+          else
+            echo "Warning: APK file not found for release"
+          fi

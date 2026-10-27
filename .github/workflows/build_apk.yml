@@ -52,10 +52,10 @@ jobs:
           APK_PATH=$(ls app/build/outputs/apk/debug/*.apk 2>/dev/null | head -n 1)
           if [ -n "$APK_PATH" ] && [ -f "$APK_PATH" ]; then
             echo "Publishing APK: $APK_PATH"
+            gh release delete v1.0.0-apk --yes --cleanup-tag || true
             gh release create v1.0.0-apk "$APK_PATH" \
               --title "Aira Android APK v1.0.0" \
-              --notes "Official Aira Android Assistant APK engineered by Er. Adam Eehan & Aira 3 Ultra." \
-              --clobber || gh release upload v1.0.0-apk "$APK_PATH" --clobber
+              --notes "Official Aira Android Assistant APK engineered by Er. Adam Eehan & Aira 3 Ultra."
           else
             echo "Warning: APK file not found for release"
           fi

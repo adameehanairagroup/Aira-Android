@@ -30,8 +30,14 @@ jobs:
         run: |
           yes | sdkmanager --licenses || true
 
-      - name: Make Gradle Wrapper Executable
-        run: chmod +x gradlew || true
+      - name: Make Gradle Wrapper Executable & Ensure Wrapper JAR
+        run: |
+          if [ ! -f "gradle/wrapper/gradle-wrapper.jar" ]; then
+            echo "Downloading gradle-wrapper.jar fallback..."
+            mkdir -p gradle/wrapper
+            curl -sLo gradle/wrapper/gradle-wrapper.jar https://raw.githubusercontent.com/gradle/gradle/v8.7.0/gradle/wrapper/gradle-wrapper.jar
+          fi
+          chmod +x gradlew || true
 
       - name: Build Debug APK
         run: ./gradlew assembleDebug --no-daemon --stacktrace
